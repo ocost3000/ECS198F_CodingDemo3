@@ -2,6 +2,9 @@ package com.example.scheduleviewer
 
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
+import android.widget.Switch
+import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
 import java.time.LocalDateTime
 
 class MainActivity : AppCompatActivity() {
@@ -93,7 +96,7 @@ class MainActivity : AppCompatActivity() {
         ),
         Event(
             "ECS 162 Web Programming",
-            "OFfice Hour",
+            "Office Hour",
             LocalDateTime.of(2022, 4, 4, 11, 0),
             LocalDateTime.of(2022, 4, 4, 12, 0),
             "Zoom"
@@ -126,10 +129,31 @@ class MainActivity : AppCompatActivity() {
             LocalDateTime.of(2022, 4, 4, 14, 0),
             "Kemper 3043"
         ),
-    )
+    ).sortedBy { it.from }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
+
+        val adapter = EventListRecyclerViewAdapter(events)
+
+        findViewById<RecyclerView>(R.id.recyclerView).apply {
+
+            this.adapter = adapter
+            layoutManager = LinearLayoutManager(context)
+        }
+
+
+        findViewById<Switch>(R.id.officeHoursSwitch).apply {
+            isChecked = true
+            setOnCheckedChangeListener { _, checked ->
+                adapter.updateEvents(when (checked) {
+                    true -> events
+                    false -> events.filter { it.type != "Office Hour" }
+                })
+            }
+
+        }
+
     }
 }
