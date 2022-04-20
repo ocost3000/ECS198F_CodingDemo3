@@ -33,6 +33,12 @@ class EventListRecyclerViewAdapter(private var events: List<Event>)
         // get specific event by index
         val event = events[position]
 
+        holder.apply {
+            titleTextView.text = event.title
+            typeTextView.text = event.type
+            timeTextView.text = "${event.start.toLocalDate()} - ${event.end.toLocalDate()}"
+            locationTextView.text = event.location
+        }
 
     }
 
