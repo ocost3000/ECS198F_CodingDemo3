@@ -10,6 +10,11 @@ import androidx.recyclerview.widget.RecyclerView
 class EventListRecyclerViewAdapter(private var events: List<Event>)
     : RecyclerView.Adapter<EventListRecyclerViewAdapter.ViewHolder>() {
 
+    fun updateEvents(events: List<Event>) {
+        this.events = events
+        notifyDataSetChanged()
+    }
+
     class ViewHolder(itemView: View): RecyclerView.ViewHolder(itemView) {
         val titleTextView: TextView = itemView.findViewById(R.id.eventTitleTextView)
         val typeTextView: TextView = itemView.findViewById(R.id.eventTypeTextView)
@@ -36,14 +41,12 @@ class EventListRecyclerViewAdapter(private var events: List<Event>)
         holder.apply {
             titleTextView.text = event.title
             typeTextView.text = event.type
-            timeTextView.text = "${event.start.toLocalDate()} - ${event.end.toLocalDate()}"
+            timeTextView.text = "${event.start.toLocalDate()} ${event.start.toLocalTime()} - ${event.end.toLocalTime()}"
             locationTextView.text = event.location
         }
 
     }
 
     // help determine total # of items
-    override fun getItemCount(): Int {
-        TODO("Not yet implemented")
-    }
+    override fun getItemCount() = events.size
 }
