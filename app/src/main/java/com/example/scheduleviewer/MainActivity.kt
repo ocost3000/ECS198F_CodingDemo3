@@ -5,6 +5,7 @@ import android.os.Bundle
 import android.widget.Switch
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import androidx.room.Room
 import com.google.gson.*
 import retrofit2.Call
 import retrofit2.Callback
@@ -40,14 +41,18 @@ class MainActivity : AppCompatActivity() {
         })
         .create()
 
-
+    // retrofit for http requestse
     val service = Retrofit.Builder()
         .baseUrl("https://api.scheduledemo.schedgo.com")
         .addConverterFactory(GsonConverterFactory.create(gson))
         .build()
         .create(ScheduleService::class.java) // pass in interface of requests
 
-    val events = listOf<Event>()
+    // database
+    private lateinit var db: AppDatabase
+    private lateinit var eventDao: EventDao
+
+    var events = listOf<Event>()
 
     val adapter = EventListRecyclerViewAdapter(events)
 
@@ -55,7 +60,18 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
-        val adapter = EventListRecyclerViewAdapter(events)
+        db = Room.databaseBuilder(applicationContext, AppDatabase::class.java, "event=db")
+            .allowMainThreadQueries()
+            .build()
+        eventDao = db.eventDao()
+
+        events = eventDao.listAllEvents()
+
+        if (events.isEmpty()) {
+            getEventsFromServer()
+            eventDao.addEvents(events)
+            adapter.updateEvents(events)
+        }
 
         findViewById<RecyclerView>(R.id.recyclerView).apply {
 
@@ -67,18 +83,27 @@ class MainActivity : AppCompatActivity() {
         findViewById<Switch>(R.id.officeHoursSwitch).apply {
             isChecked = true
             setOnCheckedChangeListener { _, checked ->
-                updateList(checked)
+                events = updateList(checked)
+                adapter.updateEvents(events)
             }
         }
-
-        updateList(true)
+        adapter.updateEvents(events)
     }
 
-    private fun updateList(includesOfficeHours: Boolean) {
+    private fun updateList(checked: Boolean): List<Event> {
+        return when (checked) {
+            true -> eventDao.listEventsOfType("Lecture")
+            false -> eventDao.listAllEvents()
+        }
+    }
+
+    private fun getEventsFromServer() {
+
+        val includesOfficeHours = true
         service.listEvents(includesOfficeHours).enqueue(object : Callback<List<Event>> {
             override fun onResponse(call: Call<List<Event>>, response: Response<List<Event>>) {
                 // update content in recyclerView with events in response
-                adapter.updateEvents(response.body()!!)
+                events = response.body()!!
             }
 
             override fun onFailure(call: Call<List<Event>>, t: Throwable) {
@@ -87,4 +112,5 @@ class MainActivity : AppCompatActivity() {
 
         })
     }
+
 }
